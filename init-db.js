@@ -1,8 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
-const bcrypt = require('bcrypt');
 const db = new sqlite3.Database('./database.sqlite');
 
-db.serialize(async () => {
+db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS usuarios (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
@@ -21,9 +20,15 @@ db.serialize(async () => {
     data_hora DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
-  const hash = await bcrypt.hash('admin123', 10);
-  db.run(`INSERT OR IGNORE INTO usuarios (id, username, password, role) VALUES (1, 'admin', '${hash}', 'admin')`, (err) => {
-    if (!err) console.log('Banco de dados inicializado com sucesso! Usuário padrão: admin / admin123');
+  // Hash pré-gerado para a senha 'admin123' (bcrypt)
+  const senhaHash = '$2b$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';
+  
+  db.run(`INSERT OR REPLACE INTO usuarios (id, username, password, role) VALUES (1, 'admin', ?, 'admin')`, [senhaHash], (err) => {
+    if (!err) {
+      console.log('Banco de dados inicializado com sucesso! Usuário: admin / Senha: admin123');
+    } else {
+      console.error('Erro ao inserir usuário:', err);
+    }
   });
 });
 db.close();
